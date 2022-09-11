@@ -2,11 +2,12 @@
 #include "timer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <immintrin.h>
 
 typedef struct matrix Matrix;
 
 float *matrix_from(char *from, int size) {
-  float *matrix = malloc(sizeof(float) * size);
+  float *matrix = aligned_alloc(32, sizeof(float) * size);
   FILE *f = fopen(from, "rb");
   fread(matrix, sizeof(float), size, f);
 
@@ -26,7 +27,7 @@ void print_matrix(float *matrix_row, int row_size) {
 
   for (int count = 0; count < row_size; count++) {
     printf("%.2f ", matrix_row[count]);
-    if ((count + 1) % 16 == 0)
+    if ((count + 1) % 8 == 0)
       printf("\n");
     if (count == 256)
       break;
@@ -37,11 +38,24 @@ void print_matrix(float *matrix_row, int row_size) {
   return;
 }
 
+int check_matrix(Matrix *correct_m, Matrix *questionable_m, int row_len){
+  
+for(int count = 0; count < row_len; count++) {
+  if(correct_m->rows[count] != questionable_m->rows[count]) {
+    printf("\n\n\nlmao, your matrix is absolute trash\n\n\n");
+    return 0;
+  }
+}
+  printf("\n\n\nmatrix is fine\n\n\n");
+  
+  return 1;
+}
+
 int main(int argc, char *argv[]) {
 
   int a_row_len, b_row_len, c_row_len, error_count = 0;
   float scalar_value;
-  Matrix *matrixA, *matrixB, *matrixC;
+  Matrix *matrixA, *matrixB, *matrixC, *matrix_check;
   struct timeval start, stop, overall_t1, overall_t2;
 
   gettimeofday(&overall_t1, NULL);
@@ -49,6 +63,7 @@ int main(int argc, char *argv[]) {
   matrixA = malloc(sizeof(Matrix));
   matrixB = malloc(sizeof(Matrix));
   matrixC = malloc(sizeof(Matrix));
+  matrix_check = malloc(sizeof(Matrix));
 
   scalar_value = atof(argv[1]);
   matrixA->height = atoi(argv[2]);
@@ -59,6 +74,9 @@ int main(int argc, char *argv[]) {
 
   matrixC->height = matrixA->height;
   matrixC->width = matrixB->width;
+
+  matrix_check->height = matrixA->height;
+  matrix_check->width = matrixB->width;
   
   a_row_len = matrixA->height * matrixA->width;
   b_row_len = matrixB->height * matrixB->width;
@@ -67,9 +85,12 @@ int main(int argc, char *argv[]) {
   matrixA->rows = matrix_from(argv[6], a_row_len);
   matrixB->rows = matrix_from(argv[7], b_row_len);
 
-  matrixC->rows = (float *)malloc(sizeof(float) * c_row_len);
-  for (int count = 0; count < c_row_len; count++){
-    matrixC->rows[count] = 0;
+  matrixC->rows = (float *)aligned_alloc(32,sizeof(float) * c_row_len);
+  matrix_check->rows = (float *)aligned_alloc(32,sizeof(float) * c_row_len);
+  __m256 zero = _mm256_set1_ps(0.0f);
+  for (int count = 0; count < c_row_len; count+=8){
+    _mm256_store_ps(matrixC->rows+count,zero);
+    _mm256_store_ps(matrix_check->rows+count,zero);
   }
 
   // printing all matrices
@@ -99,6 +120,7 @@ int main(int argc, char *argv[]) {
   gettimeofday(&start, NULL);
   error_count += matrix_matrix_mult(matrixA, matrixB, matrixC);
   gettimeofday(&stop, NULL);
+  memo_opt_matrix_matrix_mult(matrixA, matrixB, matrix_check);
 
   // printing matrix_matrix_mult and time
   printf("====== MatrixA * MatrixB  ======\n");
@@ -112,12 +134,16 @@ int main(int argc, char *argv[]) {
   error_count = abs(error_count - 2);
   printf("====================\n Errors detected: %d\n====================\n", error_count);
 
+  check_matrix(matrixC, matrix_check, c_row_len);
+  
   free(matrixA->rows);
   free(matrixB->rows);
   free(matrixC->rows);
+  free(matrix_check->rows);
   free(matrixA);
   free(matrixB);
   free(matrixC);
+  free(matrix_check);
 
   gettimeofday(&overall_t2, NULL);
   printf("Overall time: %.4f ms\n",
