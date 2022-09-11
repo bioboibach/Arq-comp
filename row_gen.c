@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     float* b = (float*)malloc(row_count * sizeof(float));
 
     for (int count = 0; count < row_count; count++) {
-        a[count] = 2+count;
-        b[count] = 5+count;
+        a[count] = 2;
+        b[count] = 5;
     }
 
     fwrite(a, sizeof(float), row_count, f_matrixA);

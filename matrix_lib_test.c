@@ -42,12 +42,11 @@ int check_matrix(Matrix *correct_m, Matrix *questionable_m, int row_len){
   
 for(int count = 0; count < row_len; count++) {
   if(correct_m->rows[count] != questionable_m->rows[count]) {
-    printf("\n\n\nlmao, your matrix is absolute trash\n\n\n");
+    printf("\n\n\nMatrix is wrong\n\n\n");
     return 0;
   }
 }
-  printf("\n\n\nmatrix is fine\n\n\n");
-  
+  printf("\n\n\nMatrix is fine\n\n\n");
   return 1;
 }
 
@@ -131,10 +130,11 @@ int main(int argc, char *argv[]) {
   save_matrix(argv[8], matrixA->rows, a_row_len);
   save_matrix(argv[9], matrixC->rows, c_row_len);
   
-  error_count = abs(error_count - 2);
+  error_count += check_matrix(matrixC, matrix_check, c_row_len);
+  
+  error_count = abs(error_count - 3);
   printf("====================\n Errors detected: %d\n====================\n", error_count);
 
-  check_matrix(matrixC, matrix_check, c_row_len);
   
   free(matrixA->rows);
   free(matrixB->rows);
