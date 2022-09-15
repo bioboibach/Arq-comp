@@ -43,7 +43,7 @@ void print_matrix(float *matrix_row, int row_size) {
   return;
 }
 
-int check_matrix(Matrix *correct_m, Matrix *questionable_m, int row_len){
+int check_matrix_result(Matrix *correct_m, Matrix *questionable_m, int row_len){
 for(int count = 0; count < row_len; count++) {
   if(correct_m->rows[count] != questionable_m->rows[count]) {
     printf("Matrix is wrong\n\n");
@@ -54,13 +54,19 @@ for(int count = 0; count < row_len; count++) {
   return 1;
 }
 
+
+
 int main(int argc, char *argv[]) {
   
   for (int count = 2; count < 6; count++){
     if (atoi(argv[count]) % 8 != 0){
-      printf("Invalid matrix size\n");
+      printf("Error: Invalid matrix size\n");
       return 0;
     }
+  }
+  if (argv[3] != argv[4]){
+    printf("Error: Matrices given not compatible\n");
+    return 0;
   }
 
   int a_row_len, b_row_len, c_row_len, error_count = 0;
@@ -144,7 +150,7 @@ int main(int argc, char *argv[]) {
 
   printf("\nChecking matrix . . .\n");
   memo_opt_matrix_matrix_mult(matrixA, matrixB, matrix_check);
-  error_count += check_matrix(matrixC, matrix_check, c_row_len);
+  error_count += check_matrix_result(matrixC, matrix_check, c_row_len);
   
   error_count = abs(error_count - 3);
   printf("====================\n Errors detected: %d\n====================\n", error_count);
