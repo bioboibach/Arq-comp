@@ -1,57 +1,51 @@
+Architecture:            x86_64
+  CPU op-mode(s):        32-bit, 64-bit
+  Address sizes:         48 bits physical, 48 bits virtual
+  Byte Order:            Little Endian
+CPU(s):                  16
+  On-line CPU(s) list:   0-15
+Vendor ID:               AuthenticAMD
+  Model name:            AMD Ryzen 7 4800H with Radeon Graphics
+    CPU family:          23
+    Model:               96
+    Thread(s) per core:  2
+    Core(s) per socket:  8
+    Socket(s):           1
+    Stepping:            1
+    Frequency boost:     enabled
+    CPU max MHz:         2900,0000
+    CPU min MHz:         1400,0000
+    BogoMIPS:            5788.81
+    Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep
+                         _good nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_leg
+                         acy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 
+                         hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cq
+                         m_occup_llc cqm_mbm_total cqm_mbm_local clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassis
+                         ts pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip rdpid overflow_recov succor smca
+Virtualization features: 
+  Virtualization:        AMD-V
+Caches (sum of all):     
+  L1d:                   256 KiB (8 instances)
+  L1i:                   256 KiB (8 instances)
+  L2:                    4 MiB (8 instances)
+  L3:                    8 MiB (2 instances)
+NUMA:                    
+  NUMA node(s):          1
+  NUMA node0 CPU(s):     0-15
+Vulnerabilities:         
+  Itlb multihit:         Not affected
+  L1tf:                  Not affected
+  Mds:                   Not affected
+  Meltdown:              Not affected
+  Mmio stale data:       Not affected
+  Retbleed:              Mitigation; untrained return thunk; SMT enabled with STIBP protection
+  Spec store bypass:     Mitigation; Speculative Store Bypass disabled via prctl and seccomp
+  Spectre v1:            Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+  Spectre v2:            Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP always-on, RSB filling
+  Srbds:                 Not affected
+  Tsx async abort:       Not affected
 
-Architecture:                    x86_64
-CPU op-mode(s):                  32-bit, 64-bit
-Byte Order:                      Little Endian
-Address sizes:                   48 bits physical, 48 bits virtual
-CPU(s):                          8
-On-line CPU(s) list:             0-7
-Thread(s) per core:              2
-Core(s) per socket:              4
-Socket(s):                       1
-NUMA node(s):                    1
-Vendor ID:                       AuthenticAMD
-CPU family:                      23
-Model:                           49
-Model name:                      AMD EPYC 7B12
-Stepping:                        0
-CPU MHz:                         2249.998
-BogoMIPS:                        4499.99
-Hypervisor vendor:               KVM
-Virtualization type:             full
-L1d cache:                       128 KiB
-L1i cache:                       128 KiB
-L2 cache:                        2 MiB
-L3 cache:                        16 MiB
-NUMA node0 CPU(s):               0-7
-Vulnerability Itlb multihit:     Not affected
-Vulnerability L1tf:              Not affected
-Vulnerability Mds:               Not affected
-Vulnerability Meltdown:          Not affected
-Vulnerability Mmio stale data:   Not affected
-Vulnerability Retbleed:          Mitigation; untrained return thunk; SMT enabled w
-                                 ith STIBP protection
-Vulnerability Spec store bypass: Mitigation; Speculative Store Bypass disabled via
-                                  prctl and seccomp
-Vulnerability Spectre v1:        Mitigation; usercopy/swapgs barriers and __user p
-                                 ointer sanitization
-Vulnerability Spectre v2:        Mitigation; Retpolines, IBPB conditional, IBRS_FW
-                                 , STIBP always-on, RSB filling
-Vulnerability Srbds:             Not affected
-Vulnerability Tsx async abort:   Not affected
-Flags:                           fpu vme de pse tsc msr pae mce cx8 apic sep mtrr 
-                                 pge mca cmov pat pse36 clflush mmx fxsr sse sse2 
-                                 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm c
-                                 onstant_tsc rep_good nopl nonstop_tsc cpuid extd_
-                                 apicid tsc_known_freq pni pclmulqdq ssse3 fma cx1
-                                 6 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c r
-                                 drand hypervisor lahf_lm cmp_legacy cr8_legacy ab
-                                 m sse4a misalignsse 3dnowprefetch osvw topoext ss
-                                 bd ibrs ibpb stibp vmmcall fsgsbase tsc_adjust bm
-                                 i1 avx2 smep bmi2 rdseed adx smap clflushopt clwb
-                                  sha_ni xsaveopt xsavec xgetbv1 clzero xsaveerptr
-                                  arat npt nrip_save umip rdpid
-                                  
-                                  
+
 
 ./run 5 1024 1024 1024 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
 ====== Matrix A ======
@@ -195,7 +189,7 @@ Executing scalar_matrix_mult . . .
 10.00 10.00 10.00 10.00 10.00 10.00 10.00 10.00 
 10.00 Print lenght limit of 256 values reached
 
-scalar_matrix_mult elapsed time: 0.6890 ms
+scalar_matrix_mult elapsed time: 1.4200 ms
 Executing matrix_matrix_mult . . .
 ====== MatrixA * MatrixB  ======
 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 
@@ -232,18 +226,21 @@ Executing matrix_matrix_mult . . .
 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 51200.00 
 51200.00 Print lenght limit of 256 values reached
 
-matrix_matrix_mult elapsed time: 910.8530 ms
+matrix_matrix_mult elapsed time: 830.7310 ms
 
-
-
-Matrix is fine
-
+Checking matrix . . .
+Matrix is correct
 
 ====================
  Errors detected: 0
 ====================
-Overall time: 5419.7998 ms
+Overall time: 5325.7339 ms
 
+
+
+==================================================================================================
+
+==================================================================================================
 
 
 
@@ -389,7 +386,7 @@ Executing scalar_matrix_mult . . .
 10.00 10.00 10.00 10.00 10.00 10.00 10.00 10.00 
 10.00 Print lenght limit of 256 values reached
 
-scalar_matrix_mult elapsed time: 2.9100 ms
+scalar_matrix_mult elapsed time: 4.8410 ms
 Executing matrix_matrix_mult . . .
 ====== MatrixA * MatrixB  ======
 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 
@@ -426,14 +423,12 @@ Executing matrix_matrix_mult . . .
 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 102400.00 
 102400.00 Print lenght limit of 256 values reached
 
-matrix_matrix_mult elapsed time: 9988.4580 ms
+matrix_matrix_mult elapsed time: 6669.8438 ms
 
-
-
-Matrix is fine
-
+Checking matrix . . .
+Matrix is correct
 
 ====================
  Errors detected: 0
 ====================
-Overall time: 48072.4297 ms
+Overall time: 44099.9297 ms
