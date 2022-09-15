@@ -38,8 +38,9 @@ void print_matrix(float *matrix_row, int row_size) {
   return;
 }
 
+//optimize
+
 int check_matrix(Matrix *correct_m, Matrix *questionable_m, int row_len){
-  
 for(int count = 0; count < row_len; count++) {
   if(correct_m->rows[count] != questionable_m->rows[count]) {
     printf("\n\n\nMatrix is wrong\n\n\n");
@@ -51,6 +52,14 @@ for(int count = 0; count < row_len; count++) {
 }
 
 int main(int argc, char *argv[]) {
+  for (int count = 2; count < 6; count++){
+    //printf("%d\n", atoi(argv[count]));
+    if (atoi(argv[count]) % 8 != 0){
+      printf("Matrix nao multipla de 8, %d\n", (count -2));
+      return 0;
+    }
+  }
+  return 0;
 
   int a_row_len, b_row_len, c_row_len, error_count = 0;
   float scalar_value;
@@ -65,6 +74,7 @@ int main(int argc, char *argv[]) {
   matrix_check = malloc(sizeof(Matrix));
 
   scalar_value = atof(argv[1]);
+
   matrixA->height = atoi(argv[2]);
   matrixA->width = atoi(argv[3]);
 
