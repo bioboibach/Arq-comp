@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
   }
-  if (argv[3] != argv[4]){
+  if (atoi(argv[3]) != atoi(argv[4])){
     printf("Error: Matrices given not compatible\n");
     return 0;
   }
