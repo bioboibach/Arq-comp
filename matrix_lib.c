@@ -2,6 +2,24 @@
 #include <stdlib.h>
 #include "matrix_lib.h"
 #include <immintrin.h>
+#include <pthread.h>
+
+int NUM_THEARDS = 1;
+
+typedef struct __ParamsMM{
+    struct matrix * matrixA;
+    struct matrix * matrixB;
+    struct matrix * matrixC;
+    int i;
+    int a_limit;
+    int b_limit;
+    int aw;
+    int bw;
+}ParamsMM;
+
+void set_number_threads(int num_threads){
+    NUM_THEARDS = num_threads;
+}
 
 int scalar_matrix_mult(float scalar_value, struct matrix* matrix) {
     if (matrix == NULL) {
@@ -54,6 +72,74 @@ int matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct ma
     }
     return 1;
 }
+
+int p_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct matrix* matrixC) {
+    if ((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL)) {
+        printf("one of the matrix struct given is NULL pointer");
+        return 0;
+    }
+
+    else if(matrixA->width != matrixB->height){
+        printf("Matrices A and B are not compatible for multiplication");
+        return 0;
+    }
+
+    int a_limit = matrixA->height * matrixA->width;
+    int b_limit = matrixB->height * matrixB->width;
+
+    ParamsMM pm[NUM_THEARDS];
+    for(int counter = 0;counter <NUM_THEARDS;counter++){
+        pm[counter].matrixA = matrixA;
+        pm[counter].matrixB = matrixB;
+        pm[counter].matrixC = matrixC;
+        pm[counter].aw = matrixA->width;
+        pm[counter].bw = matrixB->width;
+        
+
+    }
+
+
+    int i, j, k = 0;
+    int aw = matrixA->width;
+    int bw = matrixB->width; 
+    
+    
+
+
+    return 1;
+}
+
+
+
+void * compute_matrix_matrix(void * params){
+    ParamsMM * p = (ParamsMM) params;
+    struct matrix * matrixA = p->matrixA;
+    struct matrix * matrixB = p->matrixB;
+    struct matrix * matrixC = p->matrixC;
+    
+    int a_limit = p->a_limit;
+    int b_limit = p->b_limit;
+    int aw = p->aw;
+    int bw = p->bw;
+    int i,j,k;
+
+    for (i = p->i; i < a_limit; k = (i / aw) * bw){
+      
+        for(j = 0; j < b_limit; j+=8){
+            __m256 vecA = _mm256_set1_ps(matrixA->rows[i]);
+            __m256 vecB = _mm256_load_ps(matrixB->rows+j);
+            __m256 vecC = _mm256_load_ps(matrixC->rows+k);
+            __m256 res = _mm256_fmadd_ps(vecA,vecB,vecC);
+            _mm256_store_ps(matrixC->rows+k,res);
+            k+=8;
+            if((j+8) % bw == 0){
+                i++;
+                k = (i / aw) * bw;
+            }
+        }
+    }
+}
+
 
 
 int memo_opt_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct matrix* matrixC) {
