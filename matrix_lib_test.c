@@ -54,10 +54,8 @@ for(int count = 0; count < row_len; count++) {
   return 1;
 }
 
-
-
 int main(int argc, char *argv[]) {
-  
+  // check se matriz tem n de linhas multiplo de num_thread
   for (int count = 2; count < 6; count++){
     if (atoi(argv[count]) % 8 != 0){
       printf("Error: Invalid matrix size\n");
@@ -68,7 +66,8 @@ int main(int argc, char *argv[]) {
     printf("Error: Matrices given not compatible\n");
     return 0;
   }
-
+  if (atoi(argv[]))
+  
   int a_row_len, b_row_len, c_row_len, error_count = 0;
   float scalar_value;
   Matrix *matrixA, *matrixB, *matrixC, *matrix_check;
@@ -76,6 +75,7 @@ int main(int argc, char *argv[]) {
 
   gettimeofday(&overall_t1, NULL);
 
+  set_number_threads(atoi(argv[4])
   matrixA = malloc(sizeof(Matrix));
   matrixB = malloc(sizeof(Matrix));
   matrixC = malloc(sizeof(Matrix));
