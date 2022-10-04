@@ -17,6 +17,13 @@ typedef struct __ParamsMM{
     int bw;
 }ParamsMM;
 
+typedef struct __ParamsMM2{
+    struct matrix * matrixA;
+    struct matrix * matrixB;
+    struct matrix * matrixC;
+    int par_count;
+}ParamsMM2;
+
 typedef struct __ParamsSM{
     struct matrix * matrix;
     float scalar_value;
@@ -173,10 +180,73 @@ int p_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct 
     return 1;
 }
 
+void * temp_compute_matrix_matrix(void * params){
+    ParamsMM2 * p = (ParamsMM2*) params;
+    struct matrix * matrixA = p->matrixA;
+    struct matrix * matrixB = p->matrixB;
+    struct matrix * matrixC = p->matrixC;
+
+    int aw = matrixA->width;
+    int bw = matrixB->width;
+    int b_limit = matrixB->height * matrixB->width;
+    
+    int slice_start_a = (matrixA->height * matrixA->width / NUM_THREADS) * (p->par_count);
+    int slice_end_a = (matrixA->height * matrixA->width / NUM_THREADS) * (p->par_count + 1);
+
+    int slice_start_c = (matrixA->height * matrixB->width / NUM_THREADS) * (p->par_count);
+    int slice_end_c = (matrixA->height * matrixB->width / NUM_THREADS) * (p->par_count + 1);
+
+    int i = slice_start_a;
+    int j;
+    int k = slice_start_c;
+
+    for (i ; i < slice_end_a; k = (i / aw) * bw){
+      
+        for(j = 0; j < b_limit; j+=8){
+            __m256 vecA = _mm256_set1_ps(matrixA->rows[i]);
+            __m256 vecB = _mm256_load_ps(matrixB->rows+j);
+            __m256 vecC = _mm256_load_ps(matrixC->rows+k);
+            __m256 res = _mm256_fmadd_ps(vecA,vecB,vecC);
+            _mm256_store_ps(matrixC->rows+k,res);
+            k+=8;
+            if((j+8) % bw == 0){
+                i++;
+                k = (i / aw) * bw;
+            }
+        }
+    }
+}
+
+int temp_p_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct matrix* matrixC) {
+    if ((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL)) {
+        printf("one of the matrix struct given is NULL pointer");
+        return 0;
+    }
+
+    else if(matrixA->width != matrixB->height){
+        printf("Matrices A and B are not compatible for multiplication");
+        return 0;
+    }
+
+    ParamsMM2 pm[NUM_THREADS];
+    pthread_t threads[NUM_THREADS];
+
+    for(int counter = 0; counter < NUM_THREADS; counter++){
+        pm[counter].matrixA = matrixA;
+        pm[counter].matrixB = matrixB;
+        pm[counter].matrixC = matrixC;
+        pm[counter].par_count = counter;
+    }
+
+    for(int counter = 0;counter < NUM_THREADS;counter++)
+        pthread_create(&threads[counter],NULL,temp_compute_matrix_matrix,(void *)&pm[counter]);
+    
+    for(int t=0; t < NUM_THREADS; t++)
+        pthread_join(threads[t],NULL); 
 
 
-
-
+    return 1;
+}
 
 
 int memo_opt_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct matrix* matrixC) {

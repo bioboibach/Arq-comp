@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
   printf("Executing matrix_matrix_mult . . .\n");
 
   gettimeofday(&start, NULL);
-  error_count += p_matrix_matrix_mult(matrixA, matrixB, matrixC);
+  error_count += temp_p_matrix_matrix_mult(matrixA, matrixB, matrixC);
   gettimeofday(&stop, NULL);
 
   // printing matrix_matrix_mult and time
