@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     printf("Error: Matrices given not compatible\n");
     return 0;
   }
-  if (atoi(argv[]))
+  
   
   int a_row_len, b_row_len, c_row_len, error_count = 0;
   float scalar_value;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
   gettimeofday(&overall_t1, NULL);
 
-  set_number_threads(atoi(argv[4])
+  set_number_threads(atoi(argv[6]));
   matrixA = malloc(sizeof(Matrix));
   matrixB = malloc(sizeof(Matrix));
   matrixC = malloc(sizeof(Matrix));
@@ -99,8 +99,8 @@ int main(int argc, char *argv[]) {
   b_row_len = matrixB->height * matrixB->width;
   c_row_len = matrixC->height * matrixC->width;
 
-  matrixA->rows = matrix_from(argv[6], a_row_len);
-  matrixB->rows = matrix_from(argv[7], b_row_len);
+  matrixA->rows = matrix_from(argv[7], a_row_len);
+  matrixB->rows = matrix_from(argv[8], b_row_len);
 
   matrixC->rows = (float *)aligned_alloc(32,sizeof(float) * c_row_len);
   matrix_check->rows = (float *)aligned_alloc(32,sizeof(float) * c_row_len);
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
   printf("Executing scalar_matrix_mult . . . \n");
 
   gettimeofday(&start, NULL);
-  error_count += scalar_matrix_mult(scalar_value, matrixA);
+  error_count += p_scalar_matrix_mult(scalar_value, matrixA);
   gettimeofday(&stop, NULL);
 
   // printing scalar_matrix_mult result and time
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
   printf("Executing matrix_matrix_mult . . .\n");
 
   gettimeofday(&start, NULL);
-  error_count += matrix_matrix_mult(matrixA, matrixB, matrixC);
+  error_count += p_matrix_matrix_mult(matrixA, matrixB, matrixC);
   gettimeofday(&stop, NULL);
 
   // printing matrix_matrix_mult and time
@@ -144,8 +144,8 @@ int main(int argc, char *argv[]) {
   printf("matrix_matrix_mult elapsed time: %.4f ms\n",
   timedifference_msec(start, stop));
 
-  save_matrix(argv[8], matrixA->rows, a_row_len);
-  save_matrix(argv[9], matrixC->rows, c_row_len);
+  save_matrix(argv[9], matrixA->rows, a_row_len);
+  save_matrix(argv[10], matrixC->rows, c_row_len);
   
 
   printf("\nChecking matrix . . .\n");
@@ -166,8 +166,7 @@ int main(int argc, char *argv[]) {
   free(matrix_check);
 
   gettimeofday(&overall_t2, NULL);
-  printf("Overall time: %.4f ms\n",
-  timedifference_msec(overall_t1, overall_t2));
+  printf("Overall time: %.4f ms\n", timedifference_msec(overall_t1, overall_t2));
 
   return 0;
 }

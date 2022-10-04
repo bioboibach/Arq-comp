@@ -17,22 +17,53 @@ typedef struct __ParamsMM{
     int bw;
 }ParamsMM;
 
+typedef struct __ParamsSM{
+    struct matrix * matrix;
+    float scalar_value;
+    int i;
+    int limit;
+}ParamsSM;
+
+
 void set_number_threads(int num_threads){
     NUM_THREADS = num_threads;
 }
 
-int scalar_matrix_mult(float scalar_value, struct matrix* matrix) {
-    if (matrix == NULL) {
-        printf("matrix struct given is NULL pointer");
-        return 0;
-    }
-    int i, limit = matrix->height * matrix->width;
-    __m256 scalar = _mm256_set1_ps(scalar_value);
-    for (i = 0; i < limit; i+=8) {
+void *compute_scalar_matrix_mult(void * params){
+    ParamsSM * p = (ParamsSM*) params;
+    int i, limit = p->limit;
+    struct matrix * matrix = p->matrix;
+    __m256 scalar = _mm256_set1_ps(p->scalar_value);
+    for (i = p->i; i < limit; i+=8) {
         __m256 vec = _mm256_load_ps(matrix->rows+i);
         __m256 res = _mm256_mul_ps(vec,scalar);
       _mm256_store_ps(matrix->rows+i,res);
     }
+}
+
+int p_scalar_matrix_mult(float scalar_value, struct matrix* matrix) {
+    if (matrix == NULL) {
+        printf("matrix struct given is NULL pointer");
+        return 0;
+    }
+    ParamsSM ps[NUM_THREADS];
+    pthread_t threads[NUM_THREADS];
+
+    for(int counter = 0;counter < NUM_THREADS;counter++){
+        ps[counter].matrix = matrix;
+        ps[counter].scalar_value = scalar_value;
+        ps[counter].i = (matrix->height*matrix->width)/NUM_THREADS*counter;
+        ps[counter].limit = (matrix->height*matrix->width)/NUM_THREADS*(counter+1);
+        
+    }
+
+    for(int counter = 0;counter < NUM_THREADS;counter++)
+        pthread_create(&threads[counter],NULL,compute_scalar_matrix_mult,(void *)&ps[counter]);
+    
+    for(int t=0; t < NUM_THREADS; t++)
+        pthread_join(threads[t],NULL); 
+
+    
     return 1;
 }
 
@@ -72,6 +103,37 @@ int matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct ma
     }
     return 1;
 }
+
+
+void * compute_matrix_matrix(void * params){
+    ParamsMM * p = (ParamsMM*) params;
+    struct matrix * matrixA = p->matrixA;
+    struct matrix * matrixB = p->matrixB;
+    struct matrix * matrixC = p->matrixC;
+    
+    int a_limit = p->a_limit;
+    int b_limit = p->b_limit;
+    int aw = p->aw;
+    int bw = p->bw;
+    int i,j, k =p->i;
+
+    for (i = p->i; i < a_limit; k = (i / aw) * bw){
+      
+        for(j = 0; j < b_limit; j+=8){
+            __m256 vecA = _mm256_set1_ps(matrixA->rows[i]);
+            __m256 vecB = _mm256_load_ps(matrixB->rows+j);
+            __m256 vecC = _mm256_load_ps(matrixC->rows+k);
+            __m256 res = _mm256_fmadd_ps(vecA,vecB,vecC);
+            _mm256_store_ps(matrixC->rows+k,res);
+            k+=8;
+            if((j+8) % bw == 0){
+                i++;
+                k = (i / aw) * bw;
+            }
+        }
+    }
+}
+
 
 int p_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct matrix* matrixC) {
     if ((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL)) {
@@ -113,34 +175,7 @@ int p_matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct 
 
 
 
-void * compute_matrix_matrix(void * params){
-    ParamsMM * p = (ParamsMM) params;
-    struct matrix * matrixA = p->matrixA;
-    struct matrix * matrixB = p->matrixB;
-    struct matrix * matrixC = p->matrixC;
-    
-    int a_limit = p->a_limit;
-    int b_limit = p->b_limit;
-    int aw = p->aw;
-    int bw = p->bw;
-    int i,j,k;
 
-    for (i = p->i; i < a_limit; k = (i / aw) * bw){
-      
-        for(j = 0; j < b_limit; j+=8){
-            __m256 vecA = _mm256_set1_ps(matrixA->rows[i]);
-            __m256 vecB = _mm256_load_ps(matrixB->rows+j);
-            __m256 vecC = _mm256_load_ps(matrixC->rows+k);
-            __m256 res = _mm256_fmadd_ps(vecA,vecB,vecC);
-            _mm256_store_ps(matrixC->rows+k,res);
-            k+=8;
-            if((j+8) % bw == 0){
-                i++;
-                k = (i / aw) * bw;
-            }
-        }
-    }
-}
 
 
 
