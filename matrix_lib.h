@@ -1,8 +1,9 @@
-struct matrix
-{
+struct matrix {
     unsigned long int height;
     unsigned long int width;
-    float *rows;
+    float *h_rows;
+    float *d_rows;
+    int alloc_mode;
 };
 
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix);
