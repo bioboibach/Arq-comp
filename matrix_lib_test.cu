@@ -41,6 +41,35 @@ void print_matrix(float *matrix_row, int row_size) {
   return;
 }
 
+void abort(const char * msg){
+  perror(msg);
+  exit(1);
+}
+
+void allocArray(Matrix * m, unsigned long int height, unsigned long width, char * file){
+  cudaError_t gpuError;
+  int row_len = height * width;
+
+  m = malloc(sizeof(Matrix));
+
+  m->height = height;
+  m->width = width;
+  
+  if(!m->h_rows)
+    abort("CPU Allocation Error\n");
+
+  if((gpuError = cudaMalloc(&matrixA->d_rows,sizeof(float) * row_len))!= cudaSuccess)
+    abort(cudaGetErrorString(cudaError));
+
+  m->h_rows = file != NULL ? matrix_from(file,row_len) : malloc(sizeof(float) * row_len);
+
+  if((gpuError = cudaMemcpy(matrixA->d_rows, matrixA->h_rows, matrixA->height * matrixA->width * sizeof(float), cudaMemcpyHostToDevice)) != cudaSuccess)
+    abort(cudaGetErrorString(cudaError));
+
+  print_matrix(m->rows_h,row_len);
+
+}
+
 int check_matrix_result(Matrix *correct_m, Matrix *questionable_m, int row_len){
 for(int count = 0; count < row_len; count++) {
   if(correct_m->rows[count] != questionable_m->rows[count]) {
@@ -88,64 +117,16 @@ int main(int argc, char *argv[]) {
 //adicionar inidices 7,8 e modificar  6
 
   set_grid_size(atoi(argv[6]),atoi(argv[7]));
-  matrixA = malloc(sizeof(Matrix));
-  matrixB = malloc(sizeof(Matrix));
-  matrixC = malloc(sizeof(Matrix));
-  matrix_check = malloc(sizeof(Matrix));
+  printf("====== Matrix A ======\n");
+  allocArray(matrixA,atoi(argv[2]),atoi(argv[3]),argv[9]);
+  printf("\n====== Matrix B ======\n");
+  allocArray(matrixB,atoi(argv[4]),atoi(argv[5]),argv[10]);
+  printf("\n====== Matrix C ======\n");
+  allocArray(matrixC,matrixA->height,matrixB->width,NULL);
 
   scalar_value = atof(argv[1]);
 
-  matrixA->height = atoi(argv[2]);
-  matrixA->width = atoi(argv[3]);
-
-  matrixB->height = atoi(argv[4]);
-  matrixB->width = atoi(argv[5]);
-
-  matrixC->height = matrixA->height;
-  matrixC->width = matrixB->width;
-
-  matrix_check->height = matrixA->height;
-  matrix_check->width = matrixB->width;
   
-  a_row_len = matrixA->height * matrixA->width;
-  b_row_len = matrixB->height * matrixB->width;
-  c_row_len = matrixC->height * matrixC->width;
-
-  matrixA->h_rows = matrix_from(argv[9], a_row_len);
-  
-  if(cudaMalloc(&matrixA->d_rows,sizeof(float) * a_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array A returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-  
-  matrixB->h_rows = matrix_from(argv[10], b_row_len);
-  
-  if(cudaMalloc(&matrixB->d_rows,sizeof(float) * b_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array B returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-  
-  matrixC->h_rows = (float *)malloc(sizeof(float) * c_row_len);
-  
-  if(cudaMalloc(&matrixC->d_rows,sizeof(float) * c_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array C returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-  
-  matrix_check->h_rows = (float *)malloc(sizeof(float) * c_row_len);
-  
-  if(cudaMemcpy(matrixA->d_rows, matrixA->h_rows, matrixA->height * matrixA->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-    printf("Error");
-  
-  if(cudaMemcpy(matrixB->d_rows, matrixB->h_rows, matrixB->height * matrixB->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-    printf("Error");
-  
-  if(cudaMemcpy(matrixC->d_rows, matrixC->h_rows, matrixC->height * matrixC->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-    printf("Error");
-
-  // printing all matrices
-  printf("====== Matrix A ======\n");
-  print_matrix(matrixA->rows_h, a_row_len);
-
-  printf("\n====== Matrix B ======\n");
-  print_matrix(matrixB->rows_h, b_row_len);
-
-  printf("\n====== Matrix C ======\n");
-  print_matrix(matrixC->rows_h, c_row_len);
 
   // executing and timing scalar_matrix_mult
   printf("\nExecuting scalar_matrix_mult . . . \n");
