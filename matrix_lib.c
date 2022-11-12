@@ -32,6 +32,8 @@ void* compute_scalar_matrix_mult(void* params){
     int i, limit = p->limit;
     struct matrix * matrix = p->matrix;
     __m256 scalar = _mm256_set1_ps(p->scalar_value);
+
+
     for (i = p->i; i < limit; i+=8) {
         __m256 vec = _mm256_load_ps(matrix->rows+i);
         __m256 res = _mm256_mul_ps(vec,scalar);
@@ -159,12 +161,12 @@ void* compute_matrix_matrix(void* params){
     int j = 0;
     int k = slice_start_c;
 
-    for (i = slice_start_a; i < slice_end_a; i += 1){
+    for (i = slice_start_a; i < slice_end_a; i += stride){
 
         if (i % aw == 0) j = 0;
         k = (i / aw) * bw;
 
-        for(count = 0; count < bw; count += 8) {
+        for(count = 0; count < bw; count += 1) {
 
             __m256 vecA = _mm256_set1_ps(matrixA->rows[i]);
             __m256 vecB = _mm256_load_ps(matrixB->rows+j);

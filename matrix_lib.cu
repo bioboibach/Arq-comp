@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "matrix_lib.h"
 
+int threadsPerBlock = 256;
+int maxBlocksPerGrid = 4096;
+
 __global__ void compute_scalar_matrix_mult(int n, float *matrix,float scalar){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -11,13 +14,22 @@ __global__ void compute_scalar_matrix_mult(int n, float *matrix,float scalar){
     }
 }
 
-__global__ void compute_matrix_matrix_mult(int n, struct matrix *matrixA,struct matrix *matrixB,struct matrix *matrixC){
+__global__ void compute_matrix_matrix_mult(int matrixSize, ){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    for(int i = index; i< n;i +=stride){
-        //resto do algoritimo normal
+    for(int i = index; i< matrixSize;i+=stride){
+        
     }
+}
+
+int set_grid_size(int threads_per_block, int max_blocks_per_grid) {
+    if (threads_per_block > 1024 || max_blocks_per_grid > 65535) 
+        return 0;
+    
+    threadsPerBlock = threads_per_block;
+    maxBlocksPerGrid = max_blocks_per_grid;
+    return 1;
 }
 
 int scalar_matrix_mult(float scalar_value, struct matrix* matrix) {

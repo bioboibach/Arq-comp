@@ -11,10 +11,9 @@
 typedef struct matrix Matrix;
 
 float *matrix_from(char *from, int size) {
-  float *matrix = aligned_alloc(32, sizeof(float) * size);
+  float *matrix = malloc(sizeof(float) * size);
   FILE *f = fopen(from, "rb");
   fread(matrix, sizeof(float), size, f);
-
   fclose(f);
   return matrix;
 }
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
 
 //adicionar inidices 7,8 e modificar  6
 
-  set_number_threads(atoi(argv[6]));
+  set_grid_size(atoi(argv[6]),atoi(argv[7]));
   matrixA = malloc(sizeof(Matrix));
   matrixB = malloc(sizeof(Matrix));
   matrixC = malloc(sizeof(Matrix));
@@ -115,20 +114,29 @@ int main(int argc, char *argv[]) {
   matrixA->h_rows = matrix_from(argv[9], a_row_len);
   
   if(cudaMalloc(&matrixA->d_rows,sizeof(float) * a_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array A  returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+    printf("Cuda Malloc on array A returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
   
   matrixB->h_rows = matrix_from(argv[10], b_row_len);
   
   if(cudaMalloc(&matrixB->d_rows,sizeof(float) * b_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array A  returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+    printf("Cuda Malloc on array B returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
   
   matrixC->h_rows = (float *)malloc(sizeof(float) * c_row_len);
   
   if(cudaMalloc(&matrixC->d_rows,sizeof(float) * c_row_len) != cudaSuccess)
-    printf("Cuda Malloc on array A  returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+    printf("Cuda Malloc on array C returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
   
   matrix_check->h_rows = (float *)malloc(sizeof(float) * c_row_len);
   
+  if(cudaMemcpy(matrixA->d_rows, matrixA->h_rows, matrixA->height * matrixA->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+    printf("Error");
+  
+  if(cudaMemcpy(matrixB->d_rows, matrixB->h_rows, matrixB->height * matrixB->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+    printf("Error");
+  
+  if(cudaMemcpy(matrixC->d_rows, matrixC->h_rows, matrixC->height * matrixC->width * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+    printf("Error");
+
   // printing all matrices
   printf("====== Matrix A ======\n");
   print_matrix(matrixA->rows_h, a_row_len);
@@ -169,7 +177,7 @@ int main(int argc, char *argv[]) {
   save_matrix(argv[10], matrixC->h_rows, c_row_len);
   
   printf("Checking matrix . . .\n");
-  //avx_matrix_matrix_mult(matrixA, matrixB, matrix_check);
+  avx_matrix_matrix_mult(matrixA, matrixB, matrix_check);
   matrix_matrix_mult(matrixA, matrixB, matrix_check);
   error_count += check_matrix_result(matrixC, matrix_check, c_row_len);
   
@@ -181,9 +189,9 @@ int main(int argc, char *argv[]) {
   free(matrixC->h_rows);
   free(matrix_check->h_rows);
   
-  freeCuda(matrixA->d_rows);
-  freeCuda(matrixB->d_rows);
-  freeCuda(matrixC->d_rows);
+  cudaFree(matrixA->d_rows);
+  cudaFree(matrixB->d_rows);
+  cudaFree(matrixC->d_rows);
   
   free(matrixA);
   free(matrixB);
