@@ -3,10 +3,12 @@
 
 
 #include "matrix_lib.h"
-#include "timer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+extern "C" {
+  #include "timer.h"
+}
 
 typedef struct matrix Matrix;
 
@@ -113,9 +115,6 @@ int main(int argc, char *argv[]) {
 
   gettimeofday(&overall_t1, NULL);
 
-
-//adicionar inidices 7,8 e modificar  6
-
   set_grid_size(atoi(argv[6]),atoi(argv[7]));
   printf("====== Matrix A ======\n");
   allocArray(matrixA,atoi(argv[2]),atoi(argv[3]),argv[9]);
@@ -125,9 +124,7 @@ int main(int argc, char *argv[]) {
   allocArray(matrixC,matrixA->height,matrixB->width,NULL);
 
   scalar_value = atof(argv[1]);
-
   
-
   // executing and timing scalar_matrix_mult
   printf("\nExecuting scalar_matrix_mult . . . \n");
 
@@ -141,6 +138,7 @@ int main(int argc, char *argv[]) {
   printf("\n===========================================\nscalar_matrix_mult elapsed time: %.4f ms\n===========================================\n\n\n",
   timedifference_msec(start, stop));
 
+  /*
   // executing and timing matrix_matrix_mult
   printf("Executing matrix_matrix_mult . . .\n");
 
@@ -153,7 +151,7 @@ int main(int argc, char *argv[]) {
   print_matrix(matrixC->h_rows, c_row_len);
   printf("\n===============================================\nmatrix_matrix_mult elapsed time: %.4f ms\n===============================================\n\n\n",
   timedifference_msec(start, stop));
-
+  
   save_matrix(argv[9], matrixA->h_rows, a_row_len);
   save_matrix(argv[10], matrixC->h_rows, c_row_len);
   
@@ -164,6 +162,7 @@ int main(int argc, char *argv[]) {
   
   error_count = abs(error_count - 3);
   printf("====================\n Errors detected: %d\n====================\n", error_count);
+  */
 
   free(matrixA->h_rows);
   free(matrixB->h_rows);

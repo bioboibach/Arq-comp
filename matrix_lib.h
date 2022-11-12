@@ -12,4 +12,4 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix *matrixB, struct ma
 
 int avx_matrix_matrix_mult(struct matrix *matrixA, struct matrix *matrixB, struct matrix *matrixC);
 
-void set_number_threads(int num_threads);
+int set_grid_size(int threads_per_block, int max_blocks_per_grid);
