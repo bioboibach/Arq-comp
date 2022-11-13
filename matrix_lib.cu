@@ -5,22 +5,25 @@
 int threadsPerBlock = 256;
 int maxBlocksPerGrid = 4096;
 
-__global__ void compute_scalar_matrix_mult(int n, float *matrix,float scalar){
+__global__ void compute_scalar_matrix_mult(int n, float *matrix_row,float scalar){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
+    int i;
+    //printf("index: %d\n", index);
 
-    for(int i = index; i< n ; i+=stride){
-        matrix[i] *= scalar;
+    for(i = index; i < n ; i += stride){
+        matrix_row[i] = matrix_row[i] * scalar;
     }
+
 }
 
-__global__ void compute_matrix_matrix_mult(float * matrixA, float * matrixB , float * matrixC,unsigned long int heightA
+__global__ void compute_matrix_matrix_mult(float * matrixA, float * matrixB , float * matrixC,unsigned long int heightA,
     unsigned long int heightB,unsigned long int heightC, unsigned long int widthA,
     unsigned long int widthB , unsigned long int widthC){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-
-    for (i = index; i < widthC*heightC; i+=stride) {
+    /*
+    for (int i = index; i < widthC*heightC; i+=stride) {
         if (i % widthA == 0) j = 0; // se fim da linha de A, B = 0
         k = (i / widthA) * widthB; //inicio da linha de A
         for (count = 0; count < widthB ; count++){ // anda ate fim da linha de B
@@ -29,6 +32,7 @@ __global__ void compute_matrix_matrix_mult(float * matrixA, float * matrixB , fl
             k++; // C na msm coluna de B
         }
     }
+    */
 }
 
 int set_grid_size(int threads_per_block, int max_blocks_per_grid) {
@@ -41,17 +45,24 @@ int set_grid_size(int threads_per_block, int max_blocks_per_grid) {
 }
 
 int scalar_matrix_mult(float scalar_value, struct matrix* matrix) {
+    cudaError_t gpuError;
     if (matrix == NULL) {
         printf("matrix struct given is NULL pointer");
         return 0;
     }
-    int blockSize = threads_per_block;
-    int numBlocks = (matrix->height * matrix->width + blockSize - 1) / blockSize;
+    int matrix_row_len = matrix->height * matrix->width;
 
-    compute_scalar_matrix_mult<<<numBlocks,blockSize>>>(matrix->height * matrix->width,matrix->d_rows,scalar_value);
-    
-    cudaMemcpy(matrix->h_rows, matrix->d_rows, matrix->height*matrix->width, cudaMemcpyDeviceToHost);
-    
+    int blockSize = threadsPerBlock;
+    int numBlocks = (matrix_row_len + blockSize - 1) / blockSize;
+
+    compute_scalar_matrix_mult<<<numBlocks,blockSize>>>(matrix_row_len,matrix->d_rows,scalar_value);
+    cudaDeviceSynchronize();
+
+    gpuError = cudaMemcpy(matrix->h_rows, matrix->d_rows, matrix_row_len * sizeof(float), cudaMemcpyDeviceToHost);
+       if (gpuError != cudaSuccess){
+        printf("memcpy error");
+        exit(0);
+       }
     return 1;
 }
 
@@ -64,10 +75,10 @@ int matrix_matrix_mult(struct matrix* matrixA, struct matrix* matrixB, struct ma
         return 0;
     }
 
-    int blockSize = threads_per_block;
+    int blockSize = threadsPerBlock;
     int numBlocks = (matrixC->height * matrixC->width + blockSize - 1) / blockSize;
 
-    compute_matrix_matrix_mult<<<numBlocks,blockSize>>>(matrixA->d_rows,matrixB->d_rows
+    compute_matrix_matrix_mult<<<numBlocks,blockSize>>>(matrixA->d_rows,matrixB->d_rows,
         matrixC->d_rows,matrixA->height, matrixB->height,
          matrixC->height,matrixA->width,matrixB->width,matrixC->width);
 
