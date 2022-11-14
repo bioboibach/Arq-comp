@@ -5,10 +5,13 @@
 #include "matrix_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <cuda_runtime.h>
 
 extern "C" {
   #include "timer.h"
 }
+
+#define DATASET_SIZE_HOST = 26000000
 
 typedef struct matrix Matrix;
 
@@ -47,30 +50,6 @@ void abort(const char * msg){
   exit(1);
 }
 
-void allocArray(Matrix *m, unsigned long int height, unsigned long width, char * file){
-  cudaError_t gpuError;
-  int row_len = height * width;
-
-  m = (Matrix*)malloc(sizeof(Matrix));
-
-  m->height = height;
-  m->width = width;
-  
-  if(!m)
-    abort("CPU Allocation Error\n");
-
-  if((gpuError = cudaMalloc(&m->d_rows,sizeof(float) * row_len))!= cudaSuccess)
-    abort(cudaGetErrorString(gpuError));
-
-  m->h_rows = file != NULL ? matrix_from(file,row_len) : (float*)malloc(sizeof(float) * row_len);
-
-  if((gpuError = cudaMemcpy(m->d_rows, m->h_rows, m->height * m->width * sizeof(float), cudaMemcpyHostToDevice)) != cudaSuccess)
-    abort(cudaGetErrorString(gpuError));
-
-  print_matrix(m->h_rows,row_len);
-
-}
-
 int check_matrix_result(Matrix *correct_m, Matrix *questionable_m, int row_len){
 for(int count = 0; count < row_len; count++) {
   if(correct_m->h_rows[count] != questionable_m->h_rows[count]) {
@@ -82,7 +61,7 @@ for(int count = 0; count < row_len; count++) {
   return 1;
 }
 
-int check_input(int height_A, int width_A, int height_B, int width_B, int in_num_threads) {
+int check_input(int height_A, int width_A, int height_B, int width_B, int mem_alloc_space) {
 
   if (height_A % 8 != 0 || width_A % 8 != 0 || height_B % 8 != 0 || width_B % 8 != 0) {
     printf("Error: Invalid matrix size\n");
@@ -93,20 +72,38 @@ int check_input(int height_A, int width_A, int height_B, int width_B, int in_num
     printf("Error: Matrices not compatible\n");
     return 0;
   }
+/*
+  else if (((height_B * width_B) + (height_A * width_A) + (height_A * width_B)) * 8 > DATASET_SIZE_HOST){
+    printf("Error: Insuficient memory ins host\n");
+    return 0;
+  }*/
 
-  else if (0){
+  else if ((height_B * width_B * 8) > mem_alloc_space * 1000000){
     printf("Error: Insuficient memory in GPGPU\n");
     return 0;
   }
 
   else return 1;
-
 }
 
 int main(int argc, char *argv[]) {
+  /*
+    argv[1] = valor escalar
+    argv[2] = matrix a height
+    argv[3] = matrix a width
+    argv[4] = matrix b height
+    argv[5] = matrix b width
+    argv[6] = num threads per block
+    argv[7] = max num block per grid
+    argv[8] = total gpgpu memory alloc space
+    argv[9] = arq input matrix a
+    argv[10] = arq input matrix b
+    argv[11] = arq output matrix a
+    argv[12] = arq output matrix b
+  */
 
-  if (!check_input(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]))) return 0;
-  
+  if (!check_input(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[8]))) return 0;
+
   int a_row_len, b_row_len, c_row_len, error_count = 0;
   float scalar_value;
   Matrix *matrixA, *matrixB, *matrixC, *matrix_check;
@@ -115,15 +112,6 @@ int main(int argc, char *argv[]) {
 
   gettimeofday(&overall_t1, NULL);
   set_grid_size(atoi(argv[6]),atoi(argv[7]));
-  
-/*
-  printf("====== Matrix A ======\n");
-  allocArray(matrixA,atoi(argv[2]),atoi(argv[3]),argv[9]);
-  printf("\n====== Matrix B ======\n");
-  allocArray(matrixB,atoi(argv[4]),atoi(argv[5]),argv[10]);
-  printf("\n====== Matrix C ======\n");
-  allocArray(matrixC,matrixA->height,matrixB->width,NULL);
-*/
 
   matrixA = (Matrix*)malloc(sizeof(Matrix));
   matrixB = (Matrix*)malloc(sizeof(Matrix));
@@ -194,6 +182,18 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
+  gpuError = cudaMemcpy(matrixB->d_rows, matrixB->h_rows, b_row_len * sizeof(float), cudaMemcpyHostToDevice);
+    if (gpuError != cudaSuccess){
+    abort(cudaGetErrorString(gpuError));
+    exit(0);
+  }
+
+  gpuError = cudaMemcpy(matrixC->d_rows, matrixC->h_rows, c_row_len * sizeof(float), cudaMemcpyHostToDevice);
+    if (gpuError != cudaSuccess){
+    abort(cudaGetErrorString(gpuError));
+    exit(0);
+  }
+
   printf("====== Matrix A ======\n");
   print_matrix(matrixA->h_rows,a_row_len);
   printf("\n====== Matrix B ======\n");
@@ -208,13 +208,18 @@ int main(int argc, char *argv[]) {
   error_count += scalar_matrix_mult(scalar_value, matrixA);
   gettimeofday(&stop, NULL);
 
+  // teste scalar result
+  /*int scalar_result_flag = 0;
+  for (int count = 0; count < a_row_len; count++) if (matrixA->h_rows[count] != 10) scalar_result_flag = 1;*/
+
   // printing scalar_matrix_mult result and time
   printf("====== Scalar * Matrix A ======\n");
   print_matrix(matrixA->h_rows, a_row_len);
   printf("\n===========================================\nscalar_matrix_mult elapsed time: %.4f ms\n===========================================\n\n\n",
   timedifference_msec(start, stop));
-
-  /*
+    //if (scalar_result_flag == 0) printf("matriz ta certa\n");
+    //else printf("matriz errada\n");
+  
   // executing and timing matrix_matrix_mult
   printf("Executing matrix_matrix_mult . . .\n");
 
@@ -228,18 +233,18 @@ int main(int argc, char *argv[]) {
   printf("\n===============================================\nmatrix_matrix_mult elapsed time: %.4f ms\n===============================================\n\n\n",
   timedifference_msec(start, stop));
   
-  save_matrix(argv[9], matrixA->h_rows, a_row_len);
-  save_matrix(argv[10], matrixC->h_rows, c_row_len);
+  save_matrix(argv[11], matrixA->h_rows, a_row_len);
+  save_matrix(argv[12], matrixC->h_rows, c_row_len);
   
   printf("Checking matrix . . .\n");
-  avx_matrix_matrix_mult(matrixA, matrixB, matrix_check);
-  matrix_matrix_mult(matrixA, matrixB, matrix_check);
+  memo_opt_matrix_matrix_mult(matrixA, matrixB, matrix_check);
   error_count += check_matrix_result(matrixC, matrix_check, c_row_len);
+  //printf("====== Matrix_check  ======\n");
+  //print_matrix(matrix_check->h_rows, c_row_len);
   
   error_count = abs(error_count - 3);
   printf("====================\n Errors detected: %d\n====================\n", error_count);
-  */
-
+  
   free(matrixA->h_rows);
   free(matrixB->h_rows);
   free(matrixC->h_rows);

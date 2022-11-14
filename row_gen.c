@@ -14,19 +14,21 @@ int main(int argc, char *argv[]) {
     FILE* f_matrixB = fopen("floats_256_5.0f.dat", "wb");
     FILE* f_result1 = fopen("result1.dat", "wb");
     FILE* f_result2 = fopen("result2.dat", "wb");
-
+    int count = 0;
     int a_row_count = atof(argv[1]) * atof(argv[2]);
     int b_row_count = atof(argv[3]) * atof(argv[4]);
 
     float* a = (float*)malloc(a_row_count * sizeof(float));
     float* b = (float*)malloc(b_row_count * sizeof(float));
 
-    for (int count = 0; count < a_row_count; count++) {
-        a[count] = 2;
+    for (count = 0; count < a_row_count; count++) {
+        if (count % 7 == 0) a[count] = 2;
+        else a[count] = 2;
     }
 
-    for (int count = 0; count < b_row_count; count++){
-        b[count] = 5;
+    for (count = 0; count < b_row_count; count++){
+        if (count % 3 == 0) b[count] = 5;
+        else b[count] = 5;
     }
 
     fwrite(a, sizeof(float), a_row_count, f_matrixA);
