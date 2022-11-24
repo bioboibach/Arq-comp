@@ -15,10 +15,10 @@
 
 
 enum MonitorModeValues{
-MONITORING_STOPPED,
-MONITORING_STARTED,
-SETTING_HIGH_TH_STARTED,
-SETTING_LOW_TH_STARTED
+  MONITORING_STOPPED,
+  MONITORING_STARTED,
+  SETTING_HIGH_TH_STARTED,
+  SETTING_LOW_TH_STARTED
 };
 
 enum ThresholdStatusValues{
@@ -28,37 +28,142 @@ enum ThresholdStatusValues{
 
 
 enum ledModeValues{
-LED_ALL_OFF,
-LED_1_ON,
-LED_2_ON,
-LED_3_ON,
-LED_4_ON
+  LED_ALL_OFF,
+  LED_1_ON,
+  LED_2_ON,
+  LED_3_ON,
+  LED_4_ON
 };
 
 MonitorModeValues monitorValues;
 ThresholdStatusValues statusValues;
 ledModeValues ledMode;
 
+float th_min;
+float th_max;
+
+byte act_btn;
+byte num_btn;
+
+
 void printBlink(char[] str){
   MFS.write(str);
   MFS.blinkDisplay(DIGIT_ALL, ON);
 }
 
+void printBlinkP(char[] str, float a){
+  char aux[2], aux2[4];
+  dtostrf( a, 3, 1, aux );
+  sprintf(aux2,"%s%s",str,aux);
+  Serial.println(aux2);
+  MFS.write(aux2);    
+  MFS.blinkDisplay(DIGIT_1, ON);
+  MFS.blinkDisplay(DIGIT_2, ON);
+}
+
 void low_th(){
   printd("lo");
+  if(num_btn == 1)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else { //if long press
+
+    }
+  
+  if(num_btn == 2)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
+  if(num_btn == 3)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
 }
 
 void hi_th(){
   printBlink("hi");
+  if(num_btn == 1)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else { //if long press
+
+    }
+  
+  if(num_btn == 2)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
+  if(num_btn == 3)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
 }
 
 void started(){ //monitor started
   printBlink("on");
+  if(num_btn == 1)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+      
+    }
+    else { //if long press
+
+    }
+  
+  if(num_btn == 2)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
+  if(num_btn == 3)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
 }
 
-
 void stopped(){
+  ledMode = LED_ALL_OFF;
   MFS.write("off");
+  
+  if(num_btn == 1) 
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+      if (statusValues == THRESHOLD_NOT_SET){
+        //start monitor
+      }
+    }
+  
+  if(num_btn == 2)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
+  if(num_btn == 3)
+    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+
+    }
+    else{ //if long press
+
+    }
 }
 
 byte getCurrentButton(byte btn){
@@ -68,6 +173,49 @@ byte getCurrentButton(byte btn){
 byte getCurrentAction(byte btn){
   return btn & B11000000;
 }
+
+
+
+void setup(){
+  Serial.begin(9600);
+  Timer1.initialize();
+  MFS.initialize(&Timer1);
+
+  monitorValues = MONITORING_STOPPED;
+  statusValues = THRESHOLD_NOT_SET
+  ledMode = LED_ALL_OFF;
+
+  th_min = LOW_VOLTAGE_LIMIT;
+  th_max = HIGH_VOLTAGE_LIMIT;
+
+}
+
+void loop(){
+  
+  byte btn = MFS.getButton();
+  num_btn = getCurrentButton(btn);
+  act_btn = getCurrentAction(btn);
+
+  switch(monitorValues){
+    case MONITORING_STOPPED:
+      stopped();
+      
+      break;
+
+    case MONITORING_STARTED:
+      started();
+      break;
+      
+    case SETTING_HIGH_TH_STARTED:
+      hi_th();
+      break;
+    
+    case SETTING_LOW_TH_STARTED:
+      lo_th();
+      break;
+  }
+}
+
 
 void ledBlink(){ // exemplo 
   switch (countDownMode)
@@ -184,14 +332,4 @@ void ledBlink(){ // exemplo
       }
   break;
  }
-}
-
-void setup(){
-  Serial.begin(9600);
-  Timer1.initialize();
-  MFS.initialize(&Timer1);  
-}
-
-void loop(){
-  
 }
