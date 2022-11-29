@@ -45,6 +45,10 @@ float th_max;
 byte act_btn;
 byte num_btn;
 
+void printd(char[] str){
+ MFS.write(str);
+}
+
 
 void printBlink(char[] str){
   MFS.write(str);
@@ -145,14 +149,14 @@ void stopped(){
   
   if(num_btn == 1) 
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      if (statusValues == THRESHOLD_NOT_SET){
+      if (statusValues == THRESHOLD_SET){
         //start monitor
       }
     }
   
   if(num_btn == 2)
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
+      
     }
     else{ //if long press
 
