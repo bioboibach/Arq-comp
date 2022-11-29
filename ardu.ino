@@ -36,123 +36,183 @@ enum ledModeValues{
 };
 
 MonitorModeValues monitorValues;
-ThresholdStatusValues statusValues;
-ledModeValues ledMode;
+ThresholdStatusValues statusValues1;
+ThresholdStatusValues statusValues2;
+ledModeValues ledModeValues;
 
-float th_min;
-float th_max;
+float th_min = 5.0;
+float th_max = 0.0;
 
 byte act_btn;
-byte num_btn;
+
+char on[3] = {'o','n', '\0'};
+char off[4] = {'o','f','f', '\0'};
+char lo[3] = {'l','o', '\0'};
+char hi[3] = {'h','i', '\0'};
+char lt[3] = {'l','t', '\0'};
+char ht[3] = {'h','t','\0'};
 
 
+void printD(char str[], float a){
+  char aux[2], aux2[4];
+  dtostrf( a, 3, 1, aux );
+  sprintf(aux2,"%s%s",str,aux);
+  MFS.write(aux2);
+}
 
-
-void printBlink(char[] str){
+void printBlink(char str[]){
   MFS.write(str);
   MFS.blinkDisplay(DIGIT_ALL, ON);
 }
 
-void printBlinkP(char[] str, float a){
-  char aux[2], aux2[4];
-  dtostrf( a, 3, 1, aux );
-  sprintf(aux2,"%s%s",str,aux);
-  Serial.println(aux2);
-  MFS.write(aux2);    
+void printBlinkP(char str[], float a){
+  Serial.println(str);
+  printD(str,a);    
   MFS.blinkDisplay(DIGIT_1, ON);
   MFS.blinkDisplay(DIGIT_2, ON);
 }
 
+void printN(char str[]){
+  MFS.blinkDisplay(DIGIT_ALL, OFF);
+  MFS.write(str);
+}
+
 void set_lo_th(){
-  printBlink("lo");
-  if(num_btn == 1)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      statusValues = THRESHOLD_SET;
-  //faltando acender led1
+  Serial.println("lt");
+  printD(lo,th_min);
+    if ( act_btn == BUTTON_1_PRESSED || act_btn == BUTTON_1_LONG_PRESSED){
+      statusValues1 = THRESHOLD_SET;
+      MFS.writeLeds(LED_2, ON);
+
       monitorValues = MONITORING_STOPPED;
     } //ignorar o evento longo
 
-  if(num_btn == 2){ // mesma coisa no longo e curto
-      th_min+=0.1f;
-      printBlinkP("lt",th_min);
+  if(act_btn == BUTTON_2_PRESSED || act_btn == BUTTON_2_LONG_PRESSED){ // mesma coisa no longo e curto
+      th_min+=0.1;
   }
-  if(num_btn == 3){// mesma coisa no longo e curto
-      th_min-=0.1f;
-      printBlinkP("lt",th_min);
+  if(act_btn == BUTTON_3_PRESSED || act_btn == BUTTON_3_LONG_PRESSED){// mesma coisa no longo e curto
+      th_min-=0.1;
   }
 }
 
 void set_hi_th(){
-  printBlink("hi");
-  if(num_btn == 1)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      statusValues = THRESHOLD_SET;
-  //faltando acender led1
+  Serial.println("ht");
+  printD(hi,th_max);
+    if (act_btn == BUTTON_1_PRESSED || act_btn == BUTTON_1_LONG_PRESSED){
+      statusValues2= THRESHOLD_SET;
+      MFS.writeLeds(LED_1, ON);
+      
       monitorValues = MONITORING_STOPPED;
     } //ignorar o evento longo
     
   
-  if(num_btn == 2){ // mesma coisa no longo e curto
-      th_max+=0.1f;
-      printBlinkP("ht",th_max);
+  if(act_btn == BUTTON_2_PRESSED || act_btn == BUTTON_2_LONG_PRESSED){ // mesma coisa no longo e curto
+      th_max+=0.1;
   }
     
     
-  if(num_btn == 3){// mesma coisa no longo e curto
-      th_max-=0.1f;
-      printBlinkP("ht",th_max);
+  if(act_btn == BUTTON_3_PRESSED || act_btn == BUTTON_3_LONG_PRESSED){// mesma coisa no longo e curto
+      th_max-=0.1;
   }
 
 }
 
+void cycle_led(){
+  switch (ledModeValues) {
+   case LED_ALL_OFF:
+      ledModeValues = LED_1_ON;
+      MFS.writeLeds(LED_1, ON);
+    break;
+    case LED_1_ON:
+      MFS.writeLeds(LED_1, OFF);
+      ledModeValues = LED_2_ON;
+      MFS.writeLeds(LED_2, ON);
+    break;
+    case LED_2_ON:
+      MFS.writeLeds(LED_2, OFF);
+      ledModeValues = LED_3_ON;
+      MFS.writeLeds(LED_3, ON);
+    break;
+    case LED_3_ON:
+      MFS.writeLeds(LED_3, OFF);
+      ledModeValues = LED_4_ON;
+      MFS.writeLeds(LED_4, ON);
+    break;
+    case LED_4_ON:
+      MFS.writeLeds(LED_4, OFF);
+      ledModeValues = LED_1_ON;
+      MFS.writeLeds(LED_1, ON);
+    break;
+  }
+  delay(100);
+}
+
 void started(){ //monitor started
-  printBlink("on");
-  if(num_btn == 1){
+  cycle_led();
+  int pot = analogRead(POT_PIN);
+  float current_volt = pot * VOLTAGE_UNIT;
+  
+  if(current_volt>th_max){
+    printD(hi,current_volt);
+    bibi();
+  }
+  else if(current_volt < th_min){
+    printD(lo,current_volt);
+    bibi();
+  }
+  else {
+    printBlinkP(on,current_volt); 
+  }
+  
+  if(act_btn == BUTTON_1_PRESSED || act_btn == BUTTON_1_LONG_PRESSED){
     //curto e longo fazem voltar ao estado não configurado
     monitorValues = MONITORING_STOPPED;
-    statusValues = THRESHOLD_NOT_SET;
+    statusValues1 = THRESHOLD_NOT_SET;
+    statusValues2 = THRESHOLD_NOT_SET;
+    ledModeValues = LED_ALL_OFF;
     // perguntar ao anderson se tem q voltar os th_min e th_max para o valor inicial
   }
     
   
-  if(num_btn == 2){ //curto e longo fazem a mesma coisa
+  if(act_btn == BUTTON_2_PRESSED || act_btn == BUTTON_2_LONG_PRESSED){ //curto e longo fazem a mesma coisa
     
-      printBlinkP("ht",th_max); //somente enquanto estiver pressionado . . .
-      //printBlinkP("on",voltagem_atual); quando n estiver apertado 
+      printD(ht,th_max); //somente enquanto estiver pressionado . . .
+      delay(500);
   }
     
     
-  if(num_btn == 3){ //curto e longo fazem a mesma coisa
-     printBlinkP("lt",th_min); //somente enquanto estiver pressionado . . .
-      //printBlinkP("on",voltagem_atual); quando n estiver apertado 
+  if(act_btn == BUTTON_3_PRESSED || act_btn == BUTTON_3_LONG_PRESSED){ //curto e longo fazem a mesma coisa
+     printD(lt,th_min); //somente enquanto estiver pressionado . . .
+      delay(500);
   }
     
 }
 
 void stopped(){
-  ledMode = LED_ALL_OFF;
-  MFS.write("off");
+  ledModeValues = LED_ALL_OFF;
+  printN(off);
   
-  if(num_btn == 1) 
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      if (statusValues == THRESHOLD_SET){
+   if (act_btn == BUTTON_1_SHORT_RELEASE){
+      if (statusValues1 == THRESHOLD_SET && statusValues2 == THRESHOLD_SET){
         monitorValues = MONITORING_STARTED;
       }
     }
-  
-  if(num_btn == 2)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      printBlink("ht",th_max);
+    
+    if (act_btn == BUTTON_2_SHORT_RELEASE){
+      printD(ht,5.0);
+      delay(500);
     }
-    else{ //if long press
+    else if (act_btn == BUTTON_2_LONG_RELEASE) { //if long press
       monitorValues = SETTING_HIGH_TH_STARTED;
     }
-  if(num_btn == 3)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      printBlinkP("lt",th_min);
+  
+    if ( act_btn == BUTTON_3_SHORT_RELEASE){
+      printD(lt,0.0f);
+      delay(500);
     }
-    else{ //if long press
+    else if (act_btn == BUTTON_3_LONG_RELEASE){ //if long press
       monitorValues = SETTING_LOW_TH_STARTED;
+      Serial.println("Lowww")
     }
 }
 
@@ -164,7 +224,9 @@ byte getCurrentAction(byte btn){
   return btn & B11000000;
 }
 
-
+void bibi(){
+MFS.beep(4, 4, 3, 3, 50);
+}
 
 void setup(){
   Serial.begin(9600);
@@ -172,24 +234,21 @@ void setup(){
   MFS.initialize(&Timer1);
 
   monitorValues = MONITORING_STOPPED;
-  statusValues = THRESHOLD_NOT_SET
-  ledMode = LED_ALL_OFF;
+  statusValues1 = THRESHOLD_NOT_SET;
+  statusValues2 = THRESHOLD_NOT_SET;
+  ledModeValues = LED_ALL_OFF;
 
-  th_min = LOW_VOLTAGE_LIMIT;
-  th_max = HIGH_VOLTAGE_LIMIT;
+  th_min = 0.0f;
+  th_max = 5.0f;
 
 }
 
 void loop(){
-  
-  byte btn = MFS.getButton();
-  num_btn = getCurrentButton(btn);
-  act_btn = getCurrentAction(btn);
+  act_btn = MFS.getButton();
 
   switch(monitorValues){
     case MONITORING_STOPPED:
       stopped();
-      
       break;
 
     case MONITORING_STARTED:
@@ -202,124 +261,8 @@ void loop(){
     
     case SETTING_LOW_TH_STARTED:
       set_lo_th();
+    case default:
+      set_lo_th();
       break;
-  }
-}
-
-
-void ledBlink(){ // exemplo 
-  switch (countDownMode)
- {
-  case COUNTING_STOPPED:
-        if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0)
-        {
-          // inicia o temporizador
-          countDownMode = COUNTING_STARTED;
-          ledModeValue = LED_ALL_OFF;
-          MFS.writeLeds(LED_ALL, OFF);
-        }
-        else if (btn == BUTTON_1_LONG_PRESSED)
-        {
-          // reset do temporizador
-          tenths = 0;
-          seconds = 0;
-          minutes = 0;
-          MFS.write(minutes*100 + seconds);
-          MFS.blinkDisplay(DIGIT_ALL, OFF);
-          ledModeValue = LED_ALL_OFF;
-          MFS.writeLeds(LED_ALL, OFF);
-        }
-        else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED)
-        {
-          // ajuste dos minutos
-          minutes++;
-          if (minutes > 60)
-          {
-            minutes = 0;
-          }
-          MFS.write(minutes*100 + seconds);
-        }
-        else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED)
-        {
-          // ajuste dos segundos
-          seconds += 10;
-          if (seconds >= 60)
-          {
-            seconds = 0;
-          }
-          MFS.write(minutes*100 + seconds);
-        }
-  break;
-
- case COUNTING_STARTED:
-        if (btn == BUTTON_1_SHORT_RELEASE || btn == BUTTON_1_LONG_RELEASE)
-        {
-          // interrompe o temporizador
-          countDownMode = COUNTING_STOPPED;
-          ledModeValue = LED_ALL_OFF;
-          MFS.writeLeds(LED_ALL, OFF);
-        }
-        else
-        {
-          // continua a contagem regressiva
-          tenths++;
-
-          if (tenths == 10)
-          {
-            tenths = 0;
-            seconds--;
-
-            if (seconds < 0 && minutes > 0)
-            {
-              seconds = 59;
-              minutes--;
-            }
-
-            if (minutes == 0 && seconds == 0)
-            {
-              // temporizador atingiu ozero, então toca o alarme e imprime End
-              countDownMode = COUNTING_STOPPED;
-              MFS.write("End");                   // imprime End no display
-              MFS.blinkDisplay(DIGIT_ALL, ON);    // pisca o display
-             // MFS.beep(50, 50, 3);                // toca o beep 3 vezes, 500 milisegundos on / 500 off
- 
-              ledModeValue = LED_ALL_OFF;
-              MFS.writeLeds(LED_ALL, OFF);        // apaga os LEDs
-            }
-
-          if (countDownMode != COUNTING_STOPPED) {
-            MFS.write(minutes*100 + seconds);
-            switch (ledModeValue)
-            {
-             case LED_ALL_OFF:
-                ledModeValue = LED_1_ON;
-                MFS.writeLeds(LED_1, ON);
-              break;
-              case LED_1_ON:
-                MFS.writeLeds(LED_1, OFF);
-                ledModeValue = LED_2_ON;
-                MFS.writeLeds(LED_2, ON);
-              break;
-              case LED_2_ON:
-                MFS.writeLeds(LED_2, OFF);
-                ledModeValue = LED_3_ON;
-                MFS.writeLeds(LED_3, ON);
-              break;
-              case LED_3_ON:
-                MFS.writeLeds(LED_3, OFF);
-                ledModeValue = LED_4_ON;
-                MFS.writeLeds(LED_4, ON);
-              break;
-              case LED_4_ON:
-                MFS.writeLeds(LED_4, OFF);
-                ledModeValue = LED_1_ON;
-                MFS.writeLeds(LED_1, ON);
-              break;
-            }
-          }
-        }
-        delay(100);
-      }
-  break;
- }
-}
+  } 
+}MFS.writeLeds(LED_2, ON);
