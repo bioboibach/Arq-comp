@@ -45,9 +45,7 @@ float th_max;
 byte act_btn;
 byte num_btn;
 
-void printd(char[] str){
- MFS.write(str);
-}
+
 
 
 void printBlink(char[] str){
@@ -65,82 +63,70 @@ void printBlinkP(char[] str, float a){
   MFS.blinkDisplay(DIGIT_2, ON);
 }
 
-void low_th(){
-  printd("lo");
+void set_lo_th(){
+  printBlink("lo");
   if(num_btn == 1)
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+      statusValues = THRESHOLD_SET;
+  //faltando acender led1
+      monitorValues = MONITORING_STOPPED;
+    } //ignorar o evento longo
 
-    }
-    else { //if long press
-
-    }
-  
-  if(num_btn == 2)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else{ //if long press
-
-    }
-  if(num_btn == 3)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else{ //if long press
-
-    }
+  if(num_btn == 2){ // mesma coisa no longo e curto
+      th_min+=0.1f;
+      printBlinkP("lt",th_min);
+  }
+  if(num_btn == 3){// mesma coisa no longo e curto
+      th_min-=0.1f;
+      printBlinkP("lt",th_min);
+  }
 }
 
-void hi_th(){
+void set_hi_th(){
   printBlink("hi");
   if(num_btn == 1)
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else { //if long press
-
-    }
+      statusValues = THRESHOLD_SET;
+  //faltando acender led1
+      monitorValues = MONITORING_STOPPED;
+    } //ignorar o evento longo
+    
   
-  if(num_btn == 2)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
+  if(num_btn == 2){ // mesma coisa no longo e curto
+      th_max+=0.1f;
+      printBlinkP("ht",th_max);
+  }
+    
+    
+  if(num_btn == 3){// mesma coisa no longo e curto
+      th_max-=0.1f;
+      printBlinkP("ht",th_max);
+  }
 
-    }
-    else{ //if long press
-
-    }
-  if(num_btn == 3)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else{ //if long press
-
-    }
 }
 
 void started(){ //monitor started
   printBlink("on");
-  if(num_btn == 1)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      
-    }
-    else { //if long press
-
-    }
+  if(num_btn == 1){
+    //curto e longo fazem voltar ao estado não configurado
+    monitorValues = MONITORING_STOPPED;
+    statusValues = THRESHOLD_NOT_SET;
+    // perguntar ao anderson se tem q voltar os th_min e th_max para o valor inicial
+  }
+    
   
-  if(num_btn == 2)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else{ //if long press
-
-    }
-  if(num_btn == 3)
-    if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
-    }
-    else{ //if long press
-
-    }
+  if(num_btn == 2){ //curto e longo fazem a mesma coisa
+    
+      printBlinkP("ht",th_max); //somente enquanto estiver pressionado . . .
+      //printBlinkP("on",voltagem_atual); quando n estiver apertado 
+  }
+    
+    
+  if(num_btn == 3){ //curto e longo fazem a mesma coisa
+     printBlinkP("lt",th_min); //somente enquanto estiver pressionado . . .
+      //printBlinkP("on",voltagem_atual); quando n estiver apertado 
+  }
+    
 }
 
 void stopped(){
@@ -150,23 +136,23 @@ void stopped(){
   if(num_btn == 1) 
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
       if (statusValues == THRESHOLD_SET){
-        //start monitor
+        monitorValues = MONITORING_STARTED;
       }
     }
   
   if(num_btn == 2)
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-      
+      printBlink("ht",th_max);
     }
     else{ //if long press
-
+      monitorValues = SETTING_HIGH_TH_STARTED;
     }
   if(num_btn == 3)
     if (act_btn == BUTTON_PRESSED_IND || act_btn == BUTTON_SHORT_RELEASE_IND){
-
+      printBlinkP("lt",th_min);
     }
     else{ //if long press
-
+      monitorValues = SETTING_LOW_TH_STARTED;
     }
 }
 
@@ -211,11 +197,11 @@ void loop(){
       break;
       
     case SETTING_HIGH_TH_STARTED:
-      hi_th();
+      set_hi_th();
       break;
     
     case SETTING_LOW_TH_STARTED:
-      lo_th();
+      set_lo_th();
       break;
   }
 }
